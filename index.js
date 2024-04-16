@@ -1,4 +1,4 @@
-import * as THREE from "../node_modules/three/build/three.module.js";
+import * as THREE from "/node_modules/three/build/three.module.js";
 
 let scene, camera, renderer;
 let sphere;
@@ -16,13 +16,18 @@ function init() {
 
     camera.position.z = 50;
 
+    const backgroundLoader = new THREE.TextureLoader();
+    const backgroundTexture = backgroundLoader.load("./background.jpg");
+    const backgroundMaterial = new THREE.MeshBasicMaterial({ map: backgroundTexture, side: THREE.BackSide });
+    const backgroundGeometry = new THREE.BoxGeometry(2560, 1440, 1000);
+    const backgroundCube = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+    scene.add(backgroundCube);
     // Crear esfera de partículas
     createParticleSphere();
 
     // Añadir eventos de mouse para la interactividad
     document.addEventListener('mousemove', onMouseMove, false);
     document.addEventListener('wheel', onScroll, false);
-
     // Llamar a la función animate para comenzar la animación
     animate();
 }
@@ -36,11 +41,11 @@ function createParticleSphere() {
     const geometry = new THREE.BufferGeometry();
 
     const vertices = [];
-    const particleCount = 1000;
+    const particleCount = 7000;
     for (let i = 0; i < particleCount; i++) {
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.random() * Math.PI;
-        const radius = 5;
+        const radius = 20;
 
         const x = radius * Math.sin(phi) * Math.cos(theta);
         const y = radius * Math.sin(phi) * Math.sin(theta);
@@ -56,9 +61,7 @@ function createParticleSphere() {
     particles = new THREE.Points(particlesGeometry, material);
     scene.add(particles);
 }
-function toRadians(degrees) {
-    return degrees * (Math.PI / 180);
-}
+
 function updateParticlesPosition() {
     const positions = particlesGeometry.attributes.position.array;
 
@@ -79,9 +82,10 @@ function onMouseMove(event) {
     const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
     const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    sphere.position.x = mouseX * 10;
-    sphere.position.y = mouseY * 10;
+    camera.position.x = mouseX * 5;
+    camera.position.y = mouseY * 5;
 }
+
 
 // Animación
 function animate() {
