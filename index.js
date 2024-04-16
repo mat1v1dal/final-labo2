@@ -1,9 +1,13 @@
 import * as THREE from "/node_modules/three/build/three.module.js";
+import { GLTFLoader } from "/node_modules/three/examples/jsm/loaders/GLTFLoader.js";
 
 let scene, camera, renderer;
-let sphere;
-let particlesGeometry; // Variable para la geometría de partículas
-let particles;
+let planets = [];
+let orbitAngle = 0;
+
+const texto1 = document.getElementById("titulo");
+const texto2 = document.getElementById("parrafo1");
+const texto3 = document.getElementById("parrafo2");
 
 // Inicializar Three.js y la escena
 function init() {
@@ -14,7 +18,7 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    camera.position.z = 50;
+    camera.position.z = 200;
 
     const backgroundLoader = new THREE.TextureLoader();
     const backgroundTexture = backgroundLoader.load("./background.jpg");
@@ -22,12 +26,56 @@ function init() {
     const backgroundGeometry = new THREE.BoxGeometry(2560, 1440, 1000);
     const backgroundCube = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
     scene.add(backgroundCube);
-    // Crear esfera de partículas
-    createParticleSphere();
+
+    // Cargar modelos 3D de los planetas
+    const loader = new GLTFLoader();
+
+    loader.load(
+        '/planetas/scene.gltf',
+        function (gltf) {
+            gltf.scene.scale.set(10, 10, 10); // Escala del modelo
+            gltf.scene.position.set(0, 0, 0); // Posición inicial
+            scene.add(gltf.scene);
+            planets.push(gltf.scene);
+        },
+        undefined,
+        function (error) {
+            console.error(error);
+        }
+    );
+
+    loader.load(
+        '/planetas/scene.gltf',
+        function (gltf) {
+            gltf.scene.scale.set(5, 5, 5); // Escala del modelo
+            gltf.scene.position.set(20, 0, 0); // Posición inicial
+            scene.add(gltf.scene);
+            planets.push(gltf.scene);
+        },
+        undefined,
+        function (error) {
+            console.error(error);
+        }
+    );
+
+    loader.load(
+        '/planetas/scene.gltf',
+        function (gltf) {
+            gltf.scene.scale.set(7, 7, 7); // Escala del modelo
+            gltf.scene.position.set(30, 0, 0); // Posición inicial
+            scene.add(gltf.scene);
+            planets.push(gltf.scene);
+        },
+        undefined,
+        function (error) {
+            console.error(error);
+        }
+    );
 
     // Añadir eventos de mouse para la interactividad
     document.addEventListener('mousemove', onMouseMove, false);
     document.addEventListener('wheel', onScroll, false);
+
     // Llamar a la función animate para comenzar la animación
     animate();
 }
@@ -36,46 +84,6 @@ function onScroll(event){
     const delta = event.deltaY * 0.01;
     camera.position.z += delta;
 }
-// Función para crear la esfera de partículas
-function createParticleSphere() {
-    const geometry = new THREE.BufferGeometry();
-
-    const vertices = [];
-    const particleCount = 7000;
-    for (let i = 0; i < particleCount; i++) {
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.random() * Math.PI;
-        const radius = 20;
-
-        const x = radius * Math.sin(phi) * Math.cos(theta);
-        const y = radius * Math.sin(phi) * Math.sin(theta);
-        const z = radius * Math.cos(phi);
-
-        vertices.push(x, y, z);
-    }
-
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-
-    const material = new THREE.PointsMaterial({ color: 0xffff00, size: 0.2 });
-    particlesGeometry = geometry; // Guardar la geometría de partículas
-    particles = new THREE.Points(particlesGeometry, material);
-    scene.add(particles);
-}
-
-function updateParticlesPosition() {
-    const positions = particlesGeometry.attributes.position.array;
-
-    for (let i = 0; i < positions.length; i += 3) {
-        positions[i] += Math.random() * 0.1 - 0.05; // Movimiento aleatorio en el eje X
-        positions[i + 1] += Math.random() * 0.1 - 0.05; // Movimiento aleatorio en el eje Y
-        positions[i + 2] += Math.random() * 0.1 - 0.05; // Movimiento aleatorio en el eje Z
-
-        // Puedes agregar restricciones adicionales aquí para evitar que las partículas salgan de ciertos límites
-    }
-
-    particlesGeometry.attributes.position.needsUpdate = true; // Actualizar la geometría de las partículas
-}
-
 
 // Función para actualizar la posición de la esfera según la posición del mouse
 function onMouseMove(event) {
@@ -86,12 +94,59 @@ function onMouseMove(event) {
     camera.position.y = mouseY * 5;
 }
 
-
 // Animación
 function animate() {
     requestAnimationFrame(animate);
-    updateParticlesPosition();
+    updateOrbitPosition(); // Actualizar posición de los planetas en órbita
+    updateOrbitVerticalRotation(); // Actualizar rotación vertical de las órbitas
+
+    const cameraZ = camera.position.z;
+
+    // Mostrar u ocultar los textos según la posición Z de la cámara
+    if (cameraZ <= 190 && cameraZ >= 160) {
+        texto1.style.opacity = '1'; // Mostrar texto 1
+        texto2.style.opacity = '0'; // Ocultar texto 2
+        texto3.style.opacity = '0'; // Ocultar texto 3
+    } else if (cameraZ <= 155 && cameraZ >= 120) {
+        texto1.style.opacity = '0'; // Ocultar texto 1
+        texto2.style.opacity = '1'; // Mostrar texto 2
+        texto3.style.opacity = '0'; // Ocultar texto 3
+    } else if (cameraZ <= 115 && cameraZ >= 90) {
+        texto1.style.opacity = '0'; // Ocultar texto 1
+        texto2.style.opacity = '0'; // Ocultar texto 2
+        texto3.style.opacity = '1'; // Mostrar texto 3
+    } else {
+        texto1.style.opacity = '0'; // Ocultar todos los textos
+        texto2.style.opacity = '0';
+        texto3.style.opacity = '0';
+    }
+
     renderer.render(scene, camera);
+}
+
+// Función para actualizar la posición de los planetas en órbita
+function updateOrbitPosition() {
+    const speed = 0.01; // Velocidad de la órbita
+
+    planets.forEach((planet, index) => {
+        const radius = (index + 1) * 20; // Radio de la órbita
+        const angle = Date.now() * speed * (index + 1) * 0.001; // Ángulo variable para la rotación
+
+        const x = radius * Math.cos(angle);
+        const z = radius * Math.sin(angle);
+
+        planet.position.x = x;
+        planet.position.z = z;
+    });
+}
+
+// Función para actualizar la rotación vertical de las órbitas
+function updateOrbitVerticalRotation() {
+    orbitAngle += 0.01; // Incremento en el ángulo de rotación vertical
+
+    planets.forEach(planet => {
+        planet.position.y = 20 * Math.cos(orbitAngle); // Aplicar rotación vertical a la órbita del planeta
+    });
 }
 
 // Llamar a la función init para comenzar
